@@ -6,20 +6,26 @@ const client = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { niche } = await req.json();
+    const body = await req.json();
+    const niche = body?.niche;
+
+    if (!niche || typeof niche !== "string") {
+      return Response.json({ error: "Niche is required" }, { status: 400 });
+    }
 
     const prompt = `
-Generate 10 short, brandable .com domain names for: ${niche}
+Generate 10 short, brandable .com domain names for this niche: ${niche}
 
 Rules:
-- Only return domain names
+- Return only domain names
 - No numbering
 - No explanation
 - One per line
+- Keep them short and brandable
 `;
 
     const response = await client.responses.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-5.4",
       input: prompt,
     });
 
@@ -27,13 +33,24 @@ Rules:
 
     const domains = text
       .split("\n")
-      .map((d) => d.trim())
+      .map((line) => line.trim())
       .filter(Boolean)
-      .map((d) => d.replace(/\s+/g, ""));
+      .map((line) => line.replace(/^\d+\.\s*/, ""))
+      .map((line) => line.replace(/\s+/g, ""))
+      .filter((line) => line.includes("."));
 
     return Response.json({ domains });
-  } catch (err) {
-    console.error(err);
-    return Response.json({ error: "Failed" }, { status: 500 });
+  } catch (error: any) {
+    console.error("OpenAI route error:", error);
+
+    return Response.json(
+      {
+        error:
+          error?.message ||
+          error?.error?.message ||
+          "Unknown server error",
+      },
+      { status: 500 }
+    );
   }
 }

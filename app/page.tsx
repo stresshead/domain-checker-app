@@ -30,12 +30,10 @@ export default function Home() {
         throw new Error(data.error || "Something went wrong");
       }
 
-      if (data.domains) {
-        setResults(data.domains);
-      }
-    } catch (err) {
+      setResults(data.domains || []);
+    } catch (err: any) {
       console.error(err);
-      setError("Failed to generate domain ideas.");
+      setError(err.message || "Failed to generate domain ideas.");
     } finally {
       setLoading(false);
     }
