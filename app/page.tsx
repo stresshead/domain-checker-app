@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [niche, setNiche] = useState("");
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<string[]>([]);
 
   const generateIdeas = async () => {
     if (!niche.trim()) return;
