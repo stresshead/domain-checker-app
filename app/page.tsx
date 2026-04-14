@@ -5,37 +5,49 @@ import { useState } from "react";
 export default function Home() {
   const [niche, setNiche] = useState("");
   const [results, setResults] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const generateIdeas = async () => {
     if (!niche.trim()) return;
 
-    const clean = niche.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
-    const words = clean.split(" ").filter(Boolean);
-    const root = words[0] || "brand";
-    const second = words[1] || "hub";
+    setLoading(true);
+    setResults([]);
+    setError("");
 
-    const ideas = [
-      `${root}${second}.com`,
-      `${root}hub.com`,
-      `${root}lab.com`,
-      `${root}works.com`,
-      `${root}daily.com`,
-      `get${root}.com`,
-      `try${root}.com`,
-      `${root}base.com`,
-      `${root}flow.com`,
-      `${second}${root}.com`,
-    ];
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ niche }),
+      });
 
-    setResults([...new Set(ideas)]);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
+
+      if (data.domains) {
+        setResults(data.domains);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to generate domain ideas.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <main className="min-h-screen bg-white text-slate-900 p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <h1 className="text-3xl font-bold">Domain Idea Checker</h1>
+
         <p className="text-slate-600">
-          Enter a niche and generate some starter domain ideas.
+          Enter a niche and generate AI-powered domain ideas.
         </p>
 
         <div className="space-y-3">
@@ -44,22 +56,29 @@ export default function Home() {
             value={niche}
             onChange={(e) => setNiche(e.target.value)}
             placeholder="e.g. keto recipes"
-            className="w-full border border-slate-300 rounded-lg px-4 py-3"
+            className="w-full rounded-lg border border-slate-300 px-4 py-3"
           />
 
           <button
             onClick={generateIdeas}
-            className="bg-black text-white px-5 py-3 rounded-lg"
+            className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
+            disabled={loading}
           >
-            Generate ideas
+            {loading ? "Generating..." : "Generate ideas"}
           </button>
         </div>
+
+        {error && (
+          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">
+            {error}
+          </div>
+        )}
 
         <div className="space-y-2">
           {results.map((domain) => (
             <div
               key={domain}
-              className="border border-slate-200 rounded-lg px-4 py-3"
+              className="rounded-lg border border-slate-200 px-4 py-3"
             >
               {domain}
             </div>
