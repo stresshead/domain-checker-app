@@ -1,11 +1,18 @@
 import OpenAI from "openai";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(req: Request) {
   try {
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return Response.json(
+        { error: "OPENAI_API_KEY is missing" },
+        { status: 500 }
+      );
+    }
+
+    const client = new OpenAI({ apiKey });
+
     const body = await req.json();
     const niche = body?.niche;
 
@@ -32,11 +39,11 @@ Rules:
     const text = response.output_text || "";
 
     const domains = text
-      .split("\\n")
+      .split("\n")
       .map((line) => line.trim())
       .filter(Boolean)
-      .map((line) => line.replace(/^\\d+\\.\\s*/, ""))
-      .map((line) => line.replace(/\\s+/g, ""))
+      .map((line) => line.replace(/^\d+\.\s*/, ""))
+      .map((line) => line.replace(/\s+/g, ""))
       .filter((line) => line.includes("."));
 
     return Response.json({ domains });
