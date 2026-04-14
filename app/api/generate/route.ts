@@ -25,18 +25,18 @@ Rules:
 `;
 
     const response = await client.responses.create({
-      model: "gpt-5.4",
+      model: "gpt-4.1-mini",
       input: prompt,
     });
 
     const text = response.output_text || "";
 
     const domains = text
-      .split("\n")
+      .split("\\n")
       .map((line) => line.trim())
       .filter(Boolean)
-      .map((line) => line.replace(/^\d+\.\s*/, ""))
-      .map((line) => line.replace(/\s+/g, ""))
+      .map((line) => line.replace(/^\\d+\\.\\s*/, ""))
+      .map((line) => line.replace(/\\s+/g, ""))
       .filter((line) => line.includes("."));
 
     return Response.json({ domains });
