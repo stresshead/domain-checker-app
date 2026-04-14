@@ -1,37 +1,94 @@
-const generateIdeas = async () => {
-  if (!niche.trim()) return;
+"use client";
 
-  setLoading(true);
-  setResults([]);
-  setError("");
+import { useState } from "react";
 
-  try {
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ niche }),
-    });
+export default function Home() {
+  const [niche, setNiche] = useState("");
+  const [results, setResults] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-    const contentType = res.headers.get("content-type") || "";
+  const generateIdeas = async () => {
+    if (!niche.trim()) return;
 
-    if (!contentType.includes("application/json")) {
-      const text = await res.text();
-      throw new Error("API did not return JSON. Check the route or deployment.");
+    setLoading(true);
+    setResults([]);
+    setError("");
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ niche }),
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        throw new Error("API did not return JSON. Check the route or deployment.");
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
+
+      setResults(data.domains || []);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to generate domain ideas.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const data = await res.json();
+  return (
+    <main className="min-h-screen bg-white p-8 text-slate-900">
+      <div className="mx-auto max-w-2xl space-y-6">
+        <h1 className="text-3xl font-bold">Domain Idea Checker</h1>
 
-    if (!res.ok) {
-      throw new Error(data.error || "Something went wrong");
-    }
+        <p className="text-slate-600">
+          Enter a niche and generate AI-powered domain ideas.
+        </p>
 
-    setResults(data.domains || []);
-  } catch (err: any) {
-    console.error(err);
-    setError(err.message || "Failed to generate domain ideas.");
-  } finally {
-    setLoading(false);
-  }
-};
+        <div className="space-y-3">
+          <input
+            type="text"
+            value={niche}
+            onChange={(e) => setNiche(e.target.value)}
+            placeholder="e.g. keto recipes"
+            className="w-full rounded-lg border border-slate-300 px-4 py-3"
+          />
+
+          <button
+            onClick={generateIdeas}
+            className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? "Generating..." : "Generate ideas"}
+          </button>
+        </div>
+
+        {error && (
+          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-2">
+          {results.map((domain) => (
+            <div
+              key={domain}
+              className="rounded-lg border border-slate-200 px-4 py-3"
+            >
+              {domain}
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
