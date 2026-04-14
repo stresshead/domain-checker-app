@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [niche, setNiche] = useState("");
-  const [results, setResults] = useState<string[]>([]);
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,7 +27,7 @@ export default function Home() {
       const contentType = res.headers.get("content-type") || "";
 
       if (!contentType.includes("application/json")) {
-        throw new Error("API did not return JSON. Check the route or deployment.");
+        throw new Error("API did not return JSON.");
       }
 
       const data = await res.json();
@@ -37,9 +37,9 @@ export default function Home() {
       }
 
       setResults(data.domains || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || "Failed to generate domain ideas.");
+      setError("Failed to generate domain ideas.");
     } finally {
       setLoading(false);
     }
@@ -65,7 +65,7 @@ export default function Home() {
 
           <button
             onClick={generateIdeas}
-            className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
+            className="rounded-lg bg-black px-5 py-3 text-white"
             disabled={loading}
           >
             {loading ? "Generating..." : "Generate ideas"}
@@ -73,19 +73,12 @@ export default function Home() {
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-red-700">
-            {error}
-          </div>
+          <div className="text-red-600">{error}</div>
         )}
 
         <div className="space-y-2">
           {results.map((domain) => (
-            <div
-              key={domain}
-              className="rounded-lg border border-slate-200 px-4 py-3"
-            >
-              {domain}
-            </div>
+            <div key={domain}>{domain}</div>
           ))}
         </div>
       </div>
