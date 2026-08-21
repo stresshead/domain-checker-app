@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id          String   @id @default(cuid())
+  facebookId  String   @unique
+  name        String
+  email       String?
+  accessToken String
+  tokenExpiry DateTime?
+  createdAt   DateTime @default(now())
+  posts       Post[]
+  groups      Group[]
+}
+
+model Group {
+  id        String   @id
+  name      String
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  posts     Post[]
+}
+
+model Post {
+  id          String    @id @default(cuid())
+  message     String
+  groupId     String
+  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  accountId   String
+  account     Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  scheduledAt DateTime
+  postedAt    DateTime?
+  status      String    @default("pending")
+  metaPostId  String?
+  errorMsg    String?
+  createdAt   DateTime  @default(now())
+}
